@@ -102,28 +102,26 @@ if (mainBubble && secondaryBubble && dropBubble && window.matchMedia("(pointer: 
 
   /* ---------- URLs de imágenes ---------- */
   const IMAGE_URLS = [
-    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80",
-    "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=600&q=80",
-    "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=600&q=80",
-    "https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=600&q=80",
-    "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=600&q=80",
-    "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=600&q=80",
-    "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=600&q=80",
-    "https://images.unsplash.com/photo-1521295121783-8a321d551ad2?auto=format&fit=crop&w=600&q=80"
+    "https://redturisticadepueblospatrimonio.com.co/sites/default/files/styles/cms_bootstrap_12_12_square/public/glazed-cms-media/_dsc1371.jpg?itok=fKtda6-G&fid=1887",
+    "https://travelgrafia.co/wp-content/uploads/2024/12/Barrios-del-centro-historico-de-Cartagena.jpg",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRofTlrhuCrsmXrbiXhGZyUW2mUf_h72QiJ7aPdGWcX6wgC3dxutuB0YExx&s=10",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSb0We0OB1YD1PBvWw8w6PY7x1E1OQ7JZB79ORwB03QQbZKt3e6LnKSIjGx&s=10",
+    "https://images.squarespace-cdn.com/content/v1/600ecc2f276d9d4dbba5f712/1692052225491-7AAEO1USHQHXIMT6AJQQ/Medellin_Colombia_SouthAmerica-15.JPG",
+    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgDRb2bO5V3IgzEx4yy2TAqwcP1y3bcjiDRlytbs2bpm9MTYJ-96NqUyg&s=10"
   ];
 
   /* ---------- Configuración ---------- */
   const ATLAS = { slotW: 460, slotH: 380, gapPx: 84 };
 
   const CONFIG = {
-    spiralTurns: 2.7,
-    spiralRadius: 1.6,
-    spiralHeight: 3.8,
-    slotWorldW: 11.0,
-    planeH: 4.0,
-    widthSegments: 256,
+    radius: 8.0,
+    arc: Math.PI * 0.6,
+    slotWorldW: 2.2,
+    planeH: 3.5,
+    widthSegments: 220,
     heightSegments: 96,
-    cameraDistance: 12.5
+    cameraDistance: 11.5,
+    cameraFov: 42
   };
 
   const PHYSICS = {
@@ -224,7 +222,7 @@ if (mainBubble && secondaryBubble && dropBubble && window.matchMedia("(pointer: 
     scene.fog = new THREE.FogExp2(0x06111d, 0.022);
 
     camera = new THREE.PerspectiveCamera(
-      50,
+      CONFIG.cameraFov,
       helixStage.clientWidth / helixStage.clientHeight,
       0.1,
       1000
@@ -251,7 +249,7 @@ if (mainBubble && secondaryBubble && dropBubble && window.matchMedia("(pointer: 
     const positions = geometry.attributes.position;
     const orig = positions.array.slice();
 
-    // Geometría procedural: doblar el plano a lo largo de una hélice
+    // Banda curva horizontal: un solo arco evita que los extremos se cierren sobre la cámara.
     for (let i = 0; i < positions.count; i++) {
       const x = orig[i * 3];
       const y = orig[i * 3 + 1];
@@ -259,12 +257,10 @@ if (mainBubble && secondaryBubble && dropBubble && window.matchMedia("(pointer: 
       let t = (x + totalWidth / 2) / totalWidth;
       t = Math.max(0, Math.min(1, t));
 
-      const angle = t * Math.PI * 2 * CONFIG.spiralTurns;
-      const radius = CONFIG.spiralRadius * (1 - t * 0.12);
-
-      const px = Math.sin(angle) * radius;
-      const pz = Math.cos(angle) * radius;
-      const py = (t - 0.5) * CONFIG.spiralHeight + y * 0.35;
+      const angle = (t - 0.5) * CONFIG.arc;
+      const px = Math.sin(angle) * CONFIG.radius;
+      const pz = Math.cos(angle) * CONFIG.radius - CONFIG.radius;
+      const py = y;
 
       positions.setXYZ(i, px, py, pz);
     }
@@ -301,7 +297,7 @@ if (mainBubble && secondaryBubble && dropBubble && window.matchMedia("(pointer: 
           float localU = fract(u * totalImages);
 
           // Margen lateral del 5% por cada marco
-          float margin = 0.05;
+          float margin = 0.04;
           if (localU < margin || localU > (1.0 - margin)) {
             discard;
           }
@@ -311,12 +307,14 @@ if (mainBubble && secondaryBubble && dropBubble && window.matchMedia("(pointer: 
           float finalU = (cell + remappedU) / totalImages;
 
           vec4 color = texture2D(map, vec2(finalU, vUv.y));
-          gl_FragColor = color;
+          float edgeFade = smoothstep(0.0, 0.1, vUv.x) * smoothstep(1.0, 0.9, vUv.x);
+          gl_FragColor = vec4(color.rgb, color.a * edgeFade);
         }
       `,
       transparent: true,
       side: THREE.DoubleSide,
-      depthWrite: false
+      depthWrite: true,
+      depthTest: true
     });
 
     const mesh = new THREE.Mesh(geometry, material);
@@ -396,6 +394,7 @@ if (mainBubble && secondaryBubble && dropBubble && window.matchMedia("(pointer: 
     // Parallax suave del cursor
     camera.position.x += (camTargetX - camera.position.x) * Math.min(1, dt * 3.2);
     camera.position.y += (camTargetY - camera.position.y) * Math.min(1, dt * 3.2);
+    camera.fov = CONFIG.cameraFov;
     camera.lookAt(0, 0, 0);
 
     renderer.render(scene, camera);
@@ -515,31 +514,16 @@ if (mainBubble && secondaryBubble && dropBubble && window.matchMedia("(pointer: 
     const w = helixStage.clientWidth;
     const h = helixStage.clientHeight;
     camera.aspect = w / h;
+    camera.fov = CONFIG.cameraFov;
     camera.updateProjectionMatrix();
     renderer.setSize(w, h);
     PHYSICS.pxPerCard = null;
   }
 
   function boot() {
-    // Solo iniciar cuando la sección de galería sea visible
-    const gallerySection = document.getElementById("galeria");
-    if (!gallerySection) {
-      bootWebGL();
-      return;
-    }
-
-    const io = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            bootWebGL();
-            io.disconnect();
-          }
-        });
-      },
-      { rootMargin: "200px" }
-    );
-    io.observe(gallerySection);
+    // Inicializar desde el primer render para que el canvas mida correctamente
+    // aunque la página entre directamente con la sección de galería visible.
+    bootWebGL();
   }
 
   let started = false;

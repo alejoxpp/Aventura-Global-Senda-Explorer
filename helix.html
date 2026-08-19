@@ -332,14 +332,12 @@
          CONFIGURACIÓN
          ============================================================ */
       const IMAGE_URLS = [
-        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80",
-        "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=600&q=80",
-        "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=600&q=80",
-        "https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=600&q=80",
-        "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=600&q=80",
-        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=600&q=80",
-        "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=600&q=80",
-        "https://images.unsplash.com/photo-1521295121783-8a321d551ad2?auto=format&fit=crop&w=600&q=80"
+        "https://redturisticadepueblospatrimonio.com.co/sites/default/files/styles/cms_bootstrap_12_12_square/public/glazed-cms-media/_dsc1371.jpg?itok=fKtda6-G&fid=1887",
+        "https://travelgrafia.co/wp-content/uploads/2024/12/Barrios-del-centro-historico-de-Cartagena.jpg",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRofTlrhuCrsmXrbiXhGZyUW2mUf_h72QiJ7aPdGWcX6wgC3dxutuB0YExx&s=10",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSb0We0OB1YD1PBvWw8w6PY7x1E1OQ7JZB79ORwB03QQbZKt3e6LnKSIjGx&s=10",
+        "https://images.squarespace-cdn.com/content/v1/600ecc2f276d9d4dbba5f712/1692052225491-7AAEO1USHQHXIMT6AJQQ/Medellin_Colombia_SouthAmerica-15.JPG",
+        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQgDRb2bO5V3IgzEx4yy2TAqwcP1y3bcjiDRlytbs2bpm9MTYJ-96NqUyg&s=10"
       ];
 
       // Tamaño de cada ranura de imagen dentro del atlas horizontal
@@ -350,25 +348,28 @@
         gapPx: 84
       };
 
-      // Parámetros de la geometría del espiral
+      // Parámetros de la banda curva horizontal
       const CONFIG = {
-        spiralTurns: 2.7,
-        spiralRadius: 1.6,
-        spiralHeight: 3.8,
-        slotWorldW: 11.0,
-        planeH: 4.0,
-        widthSegments: 256,
-        heightSegments: 96,
-        cameraDistance: 12.5
+        radius: 10.0,
+        arc: Math.PI * 0.6,
+        slotWorldW: 2.2,
+        planeH: 3.5,
+        widthSegments: 220,
+        heightSegments: 90,
+        cameraDistance: 14,
+        cameraFov: 42,
+        maxTilt: 0.15
       };
 
-      // Parámetros de física (inercia + snap magnético)
+      // Física ultra-suave para evitar mareos y movimientos abruptos
       const PHYSICS = {
-        damping: 2.15,
-        snapThreshold: 0.34,
-        wheelFactor: 0.00045,
+        friction: 0.96,
+        speedMultiplier: 0.0003,
+        maxVelocity: 0.9,
+        snapThreshold: 0.02,
+        wheelFactor: 0.0003,
         pxPerCard: null,
-        autoAdvanceSpeed: 2.5,
+        autoAdvanceSpeed: 0.012,
         autoAdvanceDelay: 4.5
       };
 
@@ -493,7 +494,7 @@
         scene.fog = new THREE.FogExp2(0x06111d, 0.022);
 
         const aspect = dom.container.clientWidth / dom.container.clientHeight;
-        camera = new THREE.PerspectiveCamera(50, aspect, 0.1, 1000);
+        camera = new THREE.PerspectiveCamera(CONFIG.cameraFov, aspect, 0.1, 1000);
         camera.position.set(0, 0, CONFIG.cameraDistance);
         camera.lookAt(0, 0, 0);
         camera.updateProjectionMatrix();
@@ -513,21 +514,25 @@
         );
 
         const positions = geometry.attributes.position;
-        const orig = positions.array.slice();
+        const origX = new Float32Array(positions.count);
+        const origY = new Float32Array(positions.count);
 
         for (let i = 0; i < positions.count; i++) {
-          const x = orig[i * 3];
-          const y = orig[i * 3 + 1];
+          origX[i] = positions.getX(i);
+          origY[i] = positions.getY(i);
+        }
 
+        // Curvatura limpia en un arco único, sin cerrar el plano alrededor de la cámara.
+        for (let i = 0; i < positions.count; i++) {
+          const x = origX[i];
+          const y = origY[i];
           let t = (x + totalWidth / 2) / totalWidth;
           t = Math.max(0, Math.min(1, t));
 
-          const angle = t * Math.PI * 2 * CONFIG.spiralTurns;
-          const radius = Math.max(0.8, CONFIG.spiralRadius * (1 - t * 0.12));
-
-          const px = Math.sin(angle) * radius;
-          const pz = Math.cos(angle) * radius;
-          const py = (t - 0.5) * CONFIG.spiralHeight + y * 0.35;
+          const angle = (t - 0.5) * CONFIG.arc;
+          const px = Math.sin(angle) * CONFIG.radius;
+          const pz = Math.cos(angle) * CONFIG.radius - CONFIG.radius;
+          const py = y;
 
           positions.setXYZ(i, px, py, pz);
         }
@@ -537,6 +542,7 @@
         material = new THREE.ShaderMaterial({
           uniforms: {
             map: { value: texture },
+            gap: { value: 0.04 },
             offset: { value: 0.0 },
             totalImages: { value: period }
           },
@@ -549,6 +555,7 @@
           `,
           fragmentShader: `
             uniform sampler2D map;
+            uniform float gap;
             uniform float offset;
             uniform float totalImages;
             varying vec2 vUv;
@@ -558,21 +565,26 @@
               float cell = floor(u * totalImages);
               float localU = fract(u * totalImages);
 
-              float margin = 0.05;
-              if (localU < margin || localU > (1.0 - margin)) {
+              float safeGap = clamp(gap, 0.02, 0.18);
+              float safeMin = safeGap;
+              float safeMax = 1.0 - safeGap;
+
+              if (localU < safeMin || localU > safeMax) {
                 discard;
               }
 
-              float remappedU = (localU - margin) / (1.0 - 2.0 * margin);
+              float remappedU = (localU - safeMin) / (safeMax - safeMin);
               float finalU = (cell + remappedU) / totalImages;
 
               vec4 color = texture2D(map, vec2(finalU, vUv.y));
-              gl_FragColor = color;
+              float edgeFade = smoothstep(0.0, 0.12, vUv.x) * smoothstep(1.0, 0.88, vUv.x);
+              gl_FragColor = vec4(color.rgb, color.a * edgeFade);
             }
           `,
           transparent: true,
           side: THREE.DoubleSide,
-          depthWrite: false
+          depthWrite: true,
+          depthTest: true
         });
 
         const mesh = new THREE.Mesh(geometry, material);
@@ -592,6 +604,7 @@
       let velocity = 0;     // slots por segundo
       let dragging = false;
       let downX = 0;
+      let downY = 0;
       let downPhase = 0;
       let downTime = 0;
       let lastMoveX = 0;
@@ -613,19 +626,19 @@
         dt = Math.min(dt, 0.05);
 
         if (dragging) {
-          velocity = 0;
+          velocity *= PHYSICS.friction;
           return;
         }
 
-        // Decaimiento exponencial de la inercia
-        velocity *= Math.exp(-PHYSICS.damping * dt);
+        // Fricción muy alta para un desplazamiento lento y predecible
+        velocity *= PHYSICS.friction;
+        velocity = Math.min(Math.max(velocity, -PHYSICS.maxVelocity), PHYSICS.maxVelocity);
 
-        // Snap magnético hacia la imagen más cercana
         if (Math.abs(velocity) < PHYSICS.snapThreshold) {
           const target = Math.round(phase);
           const diff = target - phase;
-          phase += diff * Math.min(1, dt * 14);
-          if (Math.abs(diff) < 0.001) {
+          phase += diff * Math.min(1, dt * 10);
+          if (Math.abs(diff) < 0.0005) {
             phase = target;
             velocity = 0;
           }
@@ -633,15 +646,11 @@
 
         phase += velocity * dt;
 
-        // Auto-avance suave tras inactividad
         autoIdle += dt;
         if (!prefersReducedMotion && autoIdle > PHYSICS.autoAdvanceDelay) {
           phase += PHYSICS.autoAdvanceSpeed * dt;
         }
 
-        // Normalizar la fase para evitar pérdida de precisión en float32.
-        // El patrón del atlas se repite cada `slotCount` slots, así que restar
-        // un múltiplo entero del período no cambia la imagen renderizada.
         if (Math.abs(phase) > slotCount * 64) {
           phase = ((phase % slotCount) + slotCount) % slotCount;
         }
@@ -649,6 +658,8 @@
 
       let camTargetX = 0;
       let camTargetY = 0;
+      let targetTiltX = 0;
+      let targetTiltZ = 0;
 
       function renderScene(dt) {
         if (material && material.uniforms && material.uniforms.offset) {
@@ -656,15 +667,16 @@
         }
 
         camera.aspect = dom.container.clientWidth / dom.container.clientHeight;
+        camera.fov = CONFIG.cameraFov;
         camera.near = 0.1;
         camera.far = 1000;
-        camera.position.x += (camTargetX - camera.position.x) * Math.min(1, dt * 3.2);
-        camera.position.y += (camTargetY - camera.position.y) * Math.min(1, dt * 3.2);
-        camera.position.z = CONFIG.cameraDistance;
+        camera.position.set(0, 0, CONFIG.cameraDistance);
         camera.lookAt(0, 0, 0);
         camera.updateProjectionMatrix();
 
         if (group) {
+          group.rotation.x += (targetTiltX - group.rotation.x) * 0.12;
+          group.rotation.z += (targetTiltZ - group.rotation.z) * 0.12;
           group.position.set(0, 0, 0);
         }
 
@@ -688,6 +700,7 @@
         velocity = 0;
         instantVel = 0;
         downX = e.clientX;
+        downY = e.clientY;
         downPhase = phase;
         downTime = performance.now();
         lastMoveX = e.clientX;
@@ -701,18 +714,26 @@
         if (!dragging) {
           const nx = e.clientX / window.innerWidth - 0.5;
           const ny = e.clientY / window.innerHeight - 0.5;
-          camTargetX = nx * 1.15;
-          camTargetY = -ny * 0.8;
+          const stableX = Math.max(-0.15, Math.min(0.15, nx * 0.8));
+          const stableY = Math.max(-0.15, Math.min(0.15, -ny * 0.7));
+          targetTiltX = stableY;
+          targetTiltZ = stableX;
           return;
         }
 
         const now = performance.now();
         const dx = e.clientX - downX;
-        phase = downPhase - dx / pxPerCard();
+        const nextPhase = downPhase - dx * 0.0014;
+        phase = nextPhase;
 
         const moveDelta = e.clientX - lastMoveX;
         const moveDt = Math.max(now - lastMoveTime, 1);
         instantVel = (moveDelta / pxPerCard()) / (moveDt / 1000);
+
+        const angX = ((e.clientY - downY) / window.innerHeight) * 0.8;
+        const angZ = ((e.clientX - downX) / window.innerWidth) * 0.8;
+        targetTiltX = Math.max(-CONFIG.maxTilt, Math.min(CONFIG.maxTilt, angX * 0.2));
+        targetTiltZ = Math.max(-CONFIG.maxTilt, Math.min(CONFIG.maxTilt, angZ * 0.25));
 
         lastMoveX = e.clientX;
         lastMoveTime = now;
@@ -725,7 +746,6 @@
         dragging = false;
         dom.canvas.classList.remove("is-dragging");
 
-        // Estimar velocidad usando los últimos ~150ms del arrastre
         if (dragTrail.length >= 2) {
           const first = dragTrail[0];
           const last = dragTrail[dragTrail.length - 1];
@@ -739,6 +759,10 @@
         } else {
           velocity = instantVel;
         }
+
+        velocity = Math.min(Math.max(velocity, -PHYSICS.maxVelocity), PHYSICS.maxVelocity);
+        targetTiltX = 0;
+        targetTiltZ = 0;
       }
 
       dom.canvas.addEventListener("pointerup", onPointerUp);
@@ -749,7 +773,9 @@
         (e) => {
           e.preventDefault();
           autoIdle = 0;
-          velocity += e.deltaY * PHYSICS.wheelFactor;
+          const wheelDelta = e.deltaY * PHYSICS.speedMultiplier;
+          velocity += wheelDelta;
+          velocity = Math.min(Math.max(velocity, -PHYSICS.maxVelocity), PHYSICS.maxVelocity);
         },
         { passive: false }
       );
@@ -793,6 +819,7 @@
 
         if (camera) {
           camera.aspect = w / h;
+          camera.fov = CONFIG.cameraFov;
           camera.near = 0.1;
           camera.far = 1000;
           camera.position.set(0, 0, CONFIG.cameraDistance);

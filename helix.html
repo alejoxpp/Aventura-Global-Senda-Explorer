@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>Aventura Global — Carrusel 3D Helicoidal</title>
+<meta name="description" content="Galería 3D helicoidal interactiva con Three.js, shaders GLSL y física de inercia fluida." />
+<style>
+  :root {
+    --ink: #eaf7ff;
+    --muted: rgba(216, 238, 255, 0.78);
+    --line: rgba(255, 255, 255, 0.14);
+    --glass: rgba(8, 25, 38, 0.58);
+    --accent-a: #7de9e1;
+    --accent-b: #f14a63;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    background: #06111d;
+    font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--ink);
+    overscroll-behavior: none;
+  }
+
+  #webgl-container {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #webgl-canvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+    touch-action: none;
+  }
+
+  #webgl-canvas.is-dragging { cursor: grabbing; }
+
+  .vignette {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10;
+    background:
+      radial-gradient(ellipse at 50% 44%, transparent 52%, rgba(1, 8, 16, 0.58) 100%),
+      linear-gradient(180deg, rgba(1, 8, 16, 0.42) 0%, transparent 22%, transparent 78%, rgba(1, 8, 16, 0.5) 100%);
+  }
+
+  .helix-ui {
+    position: fixed;
+    inset: 0;
+    z-index: 20;
+    pointer-events: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: clamp(1rem, 2.4vw, 1.6rem);
+  }
+
+  .helix-topline {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .helix-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.7rem 1.1rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--glass);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+  }
+
+  .helix-brand__mark {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    object-fit: cover;
+    background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.12), 0 8px 18px rgba(241, 74, 99, 0.35);
+  }
+
+  .helix-brand__text {
+    font-size: 0.82rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    white-space: nowrap;
+  }
+
+  .helix-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    pointer-events: auto;
+  }
+
+  .loader {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.65rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--glass);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    font-size: 0.74rem;
+    font-weight: 700;
+    color: var(--muted);
+    white-space: nowrap;
+    transition: opacity 500ms ease, transform 500ms ease;
+  }
+
+  .loader.is-hidden {
+    opacity: 0;
+    transform: translateY(-8px);
+    pointer-events: none;
+  }
+
+  .loader__spinner {
+    width: 0.85rem;
+    height: 0.85rem;
+    border: 2px solid rgba(255, 255, 255, 0.16);
+    border-top-color: var(--accent-a);
+    border-radius: 50%;
+    animation: spin 850ms linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .fs-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--glass);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.74rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: transform 200ms ease, border-color 200ms ease, background 200ms ease;
+  }
+
+  .fs-btn:hover,
+  .fs-btn:focus-visible {
+    transform: translateY(-2px);
+    border-color: rgba(125, 233, 225, 0.5);
+    background: rgba(20, 40, 58, 0.72);
+  }
+
+  .fs-btn svg {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  .helix-heading {
+    text-align: center;
+    color: var(--ink);
+    text-shadow: 0 2px 22px rgba(0, 0, 0, 0.36);
+  }
+
+  .helix-heading__eyebrow {
+    margin: 0 0 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--accent-a);
+  }
+
+  .helix-heading h1 {
+    margin: 0;
+    font-size: clamp(1.05rem, 3vw, 1.85rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+
+  .helix-footer {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .helix-hint {
+    padding: 0.7rem 1.1rem;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--glass);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+    white-space: nowrap;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+  }
+
+  .helix-credits {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(232, 244, 255, 0.55);
+    text-shadow: 0 1px 12px rgba(0, 0, 0, 0.5);
+    text-align: right;
+    line-height: 1.7;
+  }
+
+  .helix-error {
+    position: fixed;
+    inset: 0;
+    z-index: 40;
+    display: none;
+    place-items: center;
+    padding: 2rem;
+    background: radial-gradient(circle at 50% 50%, #0a1c2e, #06111d 72%);
+    color: var(--ink);
+    text-align: center;
+  }
+
+  .helix-error.is-visible { display: grid; }
+
+  .helix-error p {
+    max-width: 24rem;
+    line-height: 1.65;
+    font-weight: 600;
+  }
+
+  @media (max-width: 720px) {
+    .helix-hint {
+      max-width: 64vw;
+      white-space: normal;
+      border-radius: 18px;
+    }
+
+    .helix-credits { max-width: 34vw; }
+
+    .helix-brand__text { display: none; }
+
+    .loader { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div id="webgl-container">
+    <canvas id="webgl-canvas" aria-label="Carrusel 3D helicoidal de destinos"></canvas>
+  </div>
+
+  <div class="vignette" aria-hidden="true"></div>
+
+  <div class="helix-ui">
+    <div class="helix-topline">
+      <div class="helix-brand">
+        <img class="helix-brand__mark" src="assets/logo.svg" alt="Aventura Global" />
+        <span class="helix-brand__text">Aventura Global</span>
+      </div>
+
+      <div class="helix-actions">
+        <span class="loader" id="loader" role="status">
+          <span class="loader__spinner" aria-hidden="true"></span>
+          Cargando galería…
+        </span>
+
+        <button class="fs-btn" id="fsBtn" type="button" aria-label="Activar pantalla completa">
+          <svg id="fsIconExpand" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" />
+          </svg>
+          <svg id="fsIconExit" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+          <span id="fsLabel">Pantalla completa</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="helix-heading">
+      <p class="helix-heading__eyebrow">Galería inmersiva</p>
+      <h1>Momentos que inspiran el próximo destino.</h1>
+    </div>
+
+    <div class="helix-footer">
+      <p class="helix-hint">
+        <span aria-hidden="true">⟷</span> Arrastra o desliza para explorar &nbsp;•&nbsp; <span aria-hidden="true">🖱</span> Rueda para cambiar el ritmo
+      </p>
+      <p class="helix-credits">
+        WebGL · Three.js · Shaders GLSL<br />
+        Hecho para Aventura Global
+      </p>
+    </div>
+  </div>
+
+  <div class="helix-error" id="helixError" role="alert">
+    <div>
+      <h2>❌ WebGL no está disponible</h2>
+      <p>Tu navegador o dispositivo no soporta WebGL. Intenta habilitarlo o usa otro motor de navegación.</p>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    (() => {
+      "use strict";
+
+      /* ============================================================
+         CONFIGURACIÓN
+         ============================================================ */
+      const IMAGE_URLS = [
+        "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80",
+        "https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=600&q=80",
+        "https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=600&q=80",
+        "https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=600&q=80",
+        "https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=600&q=80",
+        "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=600&q=80",
+        "https://images.unsplash.com/photo-1537996194471-e657df975ab4?auto=format&fit=crop&w=600&q=80",
+        "https://images.unsplash.com/photo-1521295121783-8a321d551ad2?auto=format&fit=crop&w=600&q=80"
+      ];
+
+      // Tamaño de cada ranura de imagen dentro del atlas horizontal
+      // La primera imagen se duplica al final para que el scroll infinito sea continuo
+      const ATLAS = {
+        slotW: 460,
+        slotH: 380,
+        gapPx: 84
+      };
+
+      // Parámetros de la geometría del espiral
+      const CONFIG = {
+        spiralTurns: 2.7,
+        spiralRadius: 1.6,
+        spiralHeight: 3.8,
+        slotWorldW: 11.0,
+        planeH: 4.0,
+        widthSegments: 256,
+        heightSegments: 96,
+        cameraDistance: 12.5
+      };
+
+      // Parámetros de física (inercia + snap magnético)
+      const PHYSICS = {
+        damping: 2.15,
+        snapThreshold: 0.34,
+        wheelFactor: 0.00045,
+        pxPerCard: null,
+        autoAdvanceSpeed: 2.5,
+        autoAdvanceDelay: 4.5
+      };
+
+      const dom = {
+        container: document.getElementById("webgl-container"),
+        canvas: document.getElementById("webgl-canvas"),
+        loader: document.getElementById("loader"),
+        fsBtn: document.getElementById("fsBtn"),
+        fsIconExpand: document.getElementById("fsIconExpand"),
+        fsIconExit: document.getElementById("fsIconExit"),
+        fsLabel: document.getElementById("fsLabel"),
+        error: document.getElementById("helixError")
+      };
+
+      if (!window.THREE) {
+        dom.error.classList.add("is-visible");
+        return;
+      }
+
+      const prefersReducedMotion =
+        window.matchMedia &&
+        window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+      /* ============================================================
+         ATLAS DE TEXTURA (Canvas 2D horizontal, 1er slot duplicado)
+         ============================================================ */
+      function loadImage(url) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error("No se pudo cargar: " + url));
+          img.src = url;
+        });
+      }
+
+      // Dibuja la imagen con recorte "cover" dentro del slot del atlas
+      function drawCover(ctx, img, dx, dy, dw, dh) {
+        const imgRatio = img.width / img.height;
+        const slotRatio = dw / dh;
+        let sw, sh, sx, sy;
+        if (imgRatio > slotRatio) {
+          sh = img.height;
+          sw = sh * slotRatio;
+          sx = (img.width - sw) / 2;
+          sy = 0;
+        } else {
+          sw = img.width;
+          sh = sw / slotRatio;
+          sx = 0;
+          sy = (img.height - sh) / 2;
+        }
+        ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+      }
+
+      async function createMasterTexture(urls, onProgress) {
+        const N = urls.length;
+        const step = ATLAS.slotW + ATLAS.gapPx;
+        const totalSlots = N + 1; // +1 duplicado de la primera imagen
+
+        const canvas = document.createElement("canvas");
+        canvas.width = totalSlots * step;
+        canvas.height = ATLAS.slotH;
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        let loaded = 0;
+        for (let i = 0; i < N; i++) {
+          try {
+            const img = await loadImage(urls[i]);
+            drawCover(ctx, img, i * step, 0, ATLAS.slotW, ATLAS.slotH);
+          } catch (err) {
+            console.warn(err.message);
+          }
+          loaded++;
+          if (onProgress) onProgress(loaded, N);
+        }
+
+        // Duplicar la primera imagen en el slot final para cerrar el ciclo
+        if (loaded > 0) {
+          try {
+            const first = await loadImage(urls[0]);
+            drawCover(ctx, first, N * step, 0, ATLAS.slotW, ATLAS.slotH);
+          } catch (err) {
+            console.warn("No se pudo duplicar la primera imagen:", err.message);
+          }
+        }
+
+        const texture = new THREE.CanvasTexture(canvas);
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.ClampToEdgeWrapping;
+        texture.minFilter = THREE.LinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.generateMipmaps = false;
+        texture.needsUpdate = true;
+
+        return {
+          texture,
+          mapCount: N,     // imágenes reales
+          period: totalSlots, // período del atlas (incluye duplicado)
+          gapFrac: ATLAS.gapPx / step,
+          canvas
+        };
+      }
+
+      /* ============================================================
+         ESCENA THREE.JS
+         ============================================================ */
+      let renderer, scene, camera, material, group;
+      let slotCount = 1;      // slots físicos totales (N + duplicado)
+
+      function initScene() {
+        renderer = new THREE.WebGLRenderer({
+          canvas: dom.canvas,
+          antialias: true,
+          powerPreference: "high-performance"
+        });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        renderer.setClearColor(0x06111d, 1);
+
+        scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x06111d, 0.022);
+
+        const aspect = dom.container.clientWidth / dom.container.clientHeight;
+        camera = new THREE.PerspectiveCamera(50, aspect, 0.1, 1000);
+        camera.position.set(0, 0, CONFIG.cameraDistance);
+        camera.lookAt(0, 0, 0);
+        camera.updateProjectionMatrix();
+
+        window.addEventListener("resize", onResize);
+      }
+
+          function createHelix(texture, period) {
+        slotCount = period;
+
+        const totalWidth = CONFIG.slotWorldW * period;
+        const geometry = new THREE.PlaneGeometry(
+          totalWidth,
+          CONFIG.planeH,
+          CONFIG.widthSegments,
+          CONFIG.heightSegments
+        );
+
+        const positions = geometry.attributes.position;
+        const orig = positions.array.slice();
+
+        for (let i = 0; i < positions.count; i++) {
+          const x = orig[i * 3];
+          const y = orig[i * 3 + 1];
+
+          let t = (x + totalWidth / 2) / totalWidth;
+          t = Math.max(0, Math.min(1, t));
+
+          const angle = t * Math.PI * 2 * CONFIG.spiralTurns;
+          const radius = Math.max(0.8, CONFIG.spiralRadius * (1 - t * 0.12));
+
+          const px = Math.sin(angle) * radius;
+          const pz = Math.cos(angle) * radius;
+          const py = (t - 0.5) * CONFIG.spiralHeight + y * 0.35;
+
+          positions.setXYZ(i, px, py, pz);
+        }
+
+        geometry.computeVertexNormals();
+
+        material = new THREE.ShaderMaterial({
+          uniforms: {
+            map: { value: texture },
+            offset: { value: 0.0 },
+            totalImages: { value: period }
+          },
+          vertexShader: `
+            varying vec2 vUv;
+            void main() {
+              vUv = uv;
+              gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+          `,
+          fragmentShader: `
+            uniform sampler2D map;
+            uniform float offset;
+            uniform float totalImages;
+            varying vec2 vUv;
+
+            void main() {
+              float u = fract(vUv.x + offset);
+              float cell = floor(u * totalImages);
+              float localU = fract(u * totalImages);
+
+              float margin = 0.05;
+              if (localU < margin || localU > (1.0 - margin)) {
+                discard;
+              }
+
+              float remappedU = (localU - margin) / (1.0 - 2.0 * margin);
+              float finalU = (cell + remappedU) / totalImages;
+
+              vec4 color = texture2D(map, vec2(finalU, vUv.y));
+              gl_FragColor = color;
+            }
+          `,
+          transparent: true,
+          side: THREE.DoubleSide,
+          depthWrite: false
+        });
+
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(0, 0, 0);
+
+        group = new THREE.Group();
+        group.position.set(0, 0, 0);
+        group.rotation.set(0, 0, 0);
+        group.add(mesh);
+        scene.add(group);
+      }
+
+      /* ============================================================
+         FÍSICA — INERCIA, SNAP Y AUTOAVANCE
+         ============================================================ */
+      let phase = 0;        // en unidades de slot scrollado
+      let velocity = 0;     // slots por segundo
+      let dragging = false;
+      let downX = 0;
+      let downPhase = 0;
+      let downTime = 0;
+      let lastMoveX = 0;
+      let lastMoveTime = 0;
+      let instantVel = 0;
+      let autoIdle = 0;
+      let dragTrail = [];
+
+      const clock = new THREE.Clock();
+
+      function pxPerCard() {
+        if (!PHYSICS.pxPerCard) {
+          PHYSICS.pxPerCard = window.innerWidth / 3.6;
+        }
+        return PHYSICS.pxPerCard;
+      }
+
+      function integratePhysics(dt) {
+        dt = Math.min(dt, 0.05);
+
+        if (dragging) {
+          velocity = 0;
+          return;
+        }
+
+        // Decaimiento exponencial de la inercia
+        velocity *= Math.exp(-PHYSICS.damping * dt);
+
+        // Snap magnético hacia la imagen más cercana
+        if (Math.abs(velocity) < PHYSICS.snapThreshold) {
+          const target = Math.round(phase);
+          const diff = target - phase;
+          phase += diff * Math.min(1, dt * 14);
+          if (Math.abs(diff) < 0.001) {
+            phase = target;
+            velocity = 0;
+          }
+        }
+
+        phase += velocity * dt;
+
+        // Auto-avance suave tras inactividad
+        autoIdle += dt;
+        if (!prefersReducedMotion && autoIdle > PHYSICS.autoAdvanceDelay) {
+          phase += PHYSICS.autoAdvanceSpeed * dt;
+        }
+
+        // Normalizar la fase para evitar pérdida de precisión en float32.
+        // El patrón del atlas se repite cada `slotCount` slots, así que restar
+        // un múltiplo entero del período no cambia la imagen renderizada.
+        if (Math.abs(phase) > slotCount * 64) {
+          phase = ((phase % slotCount) + slotCount) % slotCount;
+        }
+      }
+
+      let camTargetX = 0;
+      let camTargetY = 0;
+
+      function renderScene(dt) {
+        if (material && material.uniforms && material.uniforms.offset) {
+          material.uniforms.offset.value = phase / slotCount;
+        }
+
+        camera.aspect = dom.container.clientWidth / dom.container.clientHeight;
+        camera.near = 0.1;
+        camera.far = 1000;
+        camera.position.x += (camTargetX - camera.position.x) * Math.min(1, dt * 3.2);
+        camera.position.y += (camTargetY - camera.position.y) * Math.min(1, dt * 3.2);
+        camera.position.z = CONFIG.cameraDistance;
+        camera.lookAt(0, 0, 0);
+        camera.updateProjectionMatrix();
+
+        if (group) {
+          group.position.set(0, 0, 0);
+        }
+
+        renderer.render(scene, camera);
+      }
+
+      function loop() {
+        const dt = clock.getDelta();
+        integratePhysics(dt);
+        renderScene(dt);
+        requestAnimationFrame(loop);
+      }
+
+      /* ============================================================
+         INTERACCIÓN: PUNTERO / TOUCH / RUEDA / TECLADO
+         ============================================================ */
+      dom.canvas.addEventListener("pointerdown", (e) => {
+        dragging = true;
+        autoIdle = 0;
+        dragTrail = [];
+        velocity = 0;
+        instantVel = 0;
+        downX = e.clientX;
+        downPhase = phase;
+        downTime = performance.now();
+        lastMoveX = e.clientX;
+        lastMoveTime = downTime;
+        dragTrail.push({ x: e.clientX, t: downTime });
+        dom.canvas.classList.add("is-dragging");
+        try { dom.canvas.setPointerCapture(e.pointerId); } catch (_) {}
+      });
+
+      dom.canvas.addEventListener("pointermove", (e) => {
+        if (!dragging) {
+          const nx = e.clientX / window.innerWidth - 0.5;
+          const ny = e.clientY / window.innerHeight - 0.5;
+          camTargetX = nx * 1.15;
+          camTargetY = -ny * 0.8;
+          return;
+        }
+
+        const now = performance.now();
+        const dx = e.clientX - downX;
+        phase = downPhase - dx / pxPerCard();
+
+        const moveDelta = e.clientX - lastMoveX;
+        const moveDt = Math.max(now - lastMoveTime, 1);
+        instantVel = (moveDelta / pxPerCard()) / (moveDt / 1000);
+
+        lastMoveX = e.clientX;
+        lastMoveTime = now;
+        dragTrail.push({ x: e.clientX, t: now });
+        while (dragTrail.length > 4) dragTrail.shift();
+      });
+
+      function onPointerUp() {
+        if (!dragging) return;
+        dragging = false;
+        dom.canvas.classList.remove("is-dragging");
+
+        // Estimar velocidad usando los últimos ~150ms del arrastre
+        if (dragTrail.length >= 2) {
+          const first = dragTrail[0];
+          const last = dragTrail[dragTrail.length - 1];
+          const tSpan = (last.t - first.t) / 1000;
+          if (tSpan > 0.001) {
+            const xSpan = last.x - first.x;
+            velocity = -(xSpan / pxPerCard()) / tSpan;
+          } else {
+            velocity = instantVel;
+          }
+        } else {
+          velocity = instantVel;
+        }
+      }
+
+      dom.canvas.addEventListener("pointerup", onPointerUp);
+      dom.canvas.addEventListener("pointercancel", onPointerUp);
+
+      dom.container.addEventListener(
+        "wheel",
+        (e) => {
+          e.preventDefault();
+          autoIdle = 0;
+          velocity += e.deltaY * PHYSICS.wheelFactor;
+        },
+        { passive: false }
+      );
+
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+          const dir = e.key === "ArrowLeft" ? -1 : 1;
+          autoIdle = 0;
+          velocity += dir * 3.2;
+          phase += dir * 0.12;
+          e.preventDefault();
+        }
+      });
+
+      /* ============================================================
+         PANTALLA COMPLETA
+         ============================================================ */
+      function updateFsUI() {
+        const isFs = !!document.fullscreenElement;
+        dom.fsIconExpand.style.display = isFs ? "none" : "block";
+        dom.fsIconExit.style.display = isFs ? "block" : "none";
+        dom.fsLabel.textContent = isFs ? "Salir" : "Pantalla completa";
+      }
+
+      dom.fsBtn.addEventListener("click", () => {
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        } else if (document.documentElement.requestFullscreen) {
+          document.documentElement.requestFullscreen();
+        }
+      });
+
+      document.addEventListener("fullscreenchange", updateFsUI);
+
+      /* ============================================================
+         RESIZE + BOOT
+         ============================================================ */
+      function onResize() {
+        const w = dom.container.clientWidth;
+        const h = dom.container.clientHeight;
+
+        if (camera) {
+          camera.aspect = w / h;
+          camera.near = 0.1;
+          camera.far = 1000;
+          camera.position.set(0, 0, CONFIG.cameraDistance);
+          camera.lookAt(0, 0, 0);
+          camera.updateProjectionMatrix();
+        }
+
+        if (renderer) {
+          renderer.setSize(w, h);
+        }
+
+        PHYSICS.pxPerCard = null;
+      }
+
+      function boot() {
+        try {
+          initScene();
+        } catch (err) {
+          console.error(err);
+          dom.error.classList.add("is-visible");
+          return;
+        }
+
+        createMasterTexture(IMAGE_URLS, (loaded, total) => {
+          dom.loader.textContent =
+            "Cargando galería… " + Math.round((loaded / total) * 100) + "%";
+        })
+          .then(({ texture, period }) => {
+            createHelix(texture, period);
+            dom.loader.classList.add("is-hidden");
+            onResize();
+            requestAnimationFrame(loop);
+          })
+          .catch((err) => {
+            console.error(err);
+            if (dom.loader) dom.loader.classList.add("is-hidden");
+            dom.error.classList.add("is-visible");
+          });
+      }
+
+      boot();
+    })();
+  </script>
+</body>
+</html>

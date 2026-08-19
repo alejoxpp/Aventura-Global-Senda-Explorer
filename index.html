@@ -14,6 +14,7 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <link rel="stylesheet" href="css/style.css" />
   </head>
   <body>
@@ -21,17 +22,30 @@
       <header class="topbar">
         <div class="container nav-wrap">
           <a href="#inicio" class="brand" aria-label="Aventura Global home">
-            <span class="brand__mark">AG</span>
+            <img class="brand__mark" src="assets/logo.svg" alt="Aventura Global icono" />
             <span class="brand__text">Aventura Global</span>
           </a>
 
-          <nav class="main-nav" aria-label="Navegación principal">
+          <nav class="main-nav" id="mainNav" aria-label="Navegación principal">
             <a href="#inicio">Inicio</a>
             <a href="#destinos">Destinos</a>
             <a href="#galeria">Galería</a>
             <a href="#reseñas">Reseñas</a>
             <a href="#contacto">Contacto</a>
           </nav>
+
+          <button
+            class="nav-toggle"
+            id="navToggle"
+            type="button"
+            aria-label="Abrir menú"
+            aria-expanded="false"
+            aria-controls="mainNav"
+          >
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
 
           <a href="#contacto" class="btn btn--primary">Reservar</a>
         </div>
@@ -73,32 +87,140 @@
               </ul>
             </div>
 
-            <div class="hero__visual glass-panel" aria-label="Carrusel de destinos destacados">
-              <div class="carousel" aria-live="polite">
-                <div class="carousel__track">
-                  <article class="slide slide--one">
-                    <div class="slide__content">
-                      <span class="slide__tag">Bali • 7 noches</span>
-                      <h2>Ritmo tropical y cultura profunda</h2>
-                    </div>
-                  </article>
+            <section class="visual" id="visual">
 
-                  <article class="slide slide--two">
-                    <div class="slide__content">
-                      <span class="slide__tag">Patagonia • 9 noches</span>
-                      <h2>Montañas, lagos y cielo infinito</h2>
-                    </div>
-                  </article>
-
-                  <article class="slide slide--three">
-                    <div class="slide__content">
-                      <span class="slide__tag">Marrakech • 5 noches</span>
-                      <h2>Colores, aromas y autenticidad</h2>
-                    </div>
-                  </article>
-                </div>
+              <!-- Sistema de Iluminación y Resplandor posterior -->
+              <div class="visual-lighting" aria-hidden="true">
+                <span class="visual-glow visual-glow--ambient"></span>
+                <span class="visual-glow visual-glow--core"></span>
+                <span class="visual-glow visual-glow--sun"></span>
+                <span class="visual-glow visual-glow--bottom"></span>
+                <span class="visual-glow visual-glow--secondary"></span>
+                <span class="visual-glow visual-glow--drop"></span>
               </div>
-            </div>
+
+              <!-- Escena SVG Líquida -->
+              <svg class="liquid-scene" viewBox="0 0 1100 850" preserveAspectRatio="xMidYMid meet">
+                <defs>
+                  <!-- RUTA BURBUJA PRINCIPAL -->
+                  <path id="mainBubblePath" d="M 305 154 C 430 88 638 77 781 126 C 906 169 978 281 961 405 C 945 524 858 620 735 651 C 631 678 558 647 494 620 C 434 595 380 592 322 552 C 247 501 204 426 218 345 C 231 267 258 196 305 154 Z">
+                    <animate attributeName="d" dur="14s" repeatCount="indefinite" calcMode="spline" keyTimes="0; .34; .68; 1" keySplines=".42 0 .58 1; .42 0 .58 1; .42 0 .58 1" values="M 305 154 C 430 88 638 77 781 126 C 906 169 978 281 961 405 C 945 524 858 620 735 651 C 631 678 558 647 494 620 C 434 595 380 592 322 552 C 247 501 204 426 218 345 C 231 267 258 196 305 154 Z; M 286 171 C 411 91 626 68 792 135 C 922 187 966 296 949 420 C 929 552 829 622 722 649 C 614 677 541 627 478 617 C 405 605 345 612 297 553 C 242 486 192 415 218 324 C 241 244 244 207 286 171 Z; M 321 142 C 468 78 651 91 801 145 C 916 186 988 301 955 430 C 923 551 844 634 712 656 C 600 674 540 650 468 611 C 403 575 345 592 293 533 C 230 462 216 380 234 309 C 251 240 279 170 321 142 Z; M 305 154 C 430 88 638 77 781 126 C 906 169 978 281 961 405 C 945 524 858 620 735 651 C 631 678 558 647 494 620 C 434 595 380 592 322 552 C 247 501 204 426 218 345 C 231 267 258 196 305 154 Z" />
+                  </path>
+
+                  <!-- RUTA BURBUJA SECUNDARIA -->
+                  <path id="secondaryBubblePath" d="M 224 530 C 291 486 386 489 449 543 C 508 594 500 683 441 731 C 383 779 279 771 223 714 C 168 657 168 568 224 530 Z">
+                    <animate attributeName="d" dur="11s" begin="-3s" repeatCount="indefinite" calcMode="spline" keyTimes="0; .5; 1" keySplines=".42 0 .58 1; .42 0 .58 1" values="M 224 530 C 291 486 386 489 449 543 C 508 594 500 683 441 731 C 383 779 279 771 223 714 C 168 657 168 568 224 530 Z; M 207 545 C 272 483 390 493 458 557 C 507 605 483 695 425 737 C 361 783 262 757 211 699 C 165 646 160 588 207 545 Z; M 224 530 C 291 486 386 489 449 543 C 508 594 500 683 441 731 C 383 779 279 771 223 714 C 168 657 168 568 224 530 Z" />
+                  </path>
+
+                  <!-- RUTA BURBUJA GOTA -->
+                  <path id="dropBubblePath" d="M 645 679 C 686 658 741 675 758 713 C 776 753 747 791 704 793 C 665 794 627 765 629 728 C 630 707 632 687 645 679 Z">
+                    <animate attributeName="d" dur="8s" begin="-5s" repeatCount="indefinite" calcMode="spline" keyTimes="0; .5; 1" keySplines=".42 0 .58 1; .42 0 .58 1" values="M 645 679 C 686 658 741 675 758 713 C 776 753 747 791 704 793 C 665 794 627 765 629 728 C 630 707 632 687 645 679 Z; M 638 687 C 679 650 746 676 766 718 C 783 754 748 786 711 801 C 667 805 620 767 628 725 C 632 705 626 696 638 687 Z; M 645 679 C 686 658 741 675 758 713 C 776 753 747 791 704 793 C 665 794 627 765 629 728 C 630 707 632 687 645 679 Z" />
+                  </path>
+
+                  <clipPath id="mainBubbleClip"><use href="#mainBubblePath" /></clipPath>
+                  <clipPath id="secondaryBubbleClip"><use href="#secondaryBubblePath" /></clipPath>
+                  <clipPath id="dropBubbleClip"><use href="#dropBubblePath" /></clipPath>
+
+                  <!-- FILTRO DE DISTORSIÓN LÍQUIDA -->
+                  <filter id="mainLiquidFilter" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+                    <feTurbulence type="fractalNoise" baseFrequency=".008 .010" numOctaves="2" seed="92" result="noise">
+                      <animate attributeName="baseFrequency" dur="10s" repeatCount="indefinite" values=".008 .010; .010 .008; .007 .012; .008 .010" />
+                    </feTurbulence>
+                    <feGaussianBlur in="noise" stdDeviation="1.35" result="blurredNoise" />
+                    <feDisplacementMap in="SourceGraphic" in2="blurredNoise" scale="86" xChannelSelector="R" yChannelSelector="G">
+                      <animate attributeName="scale" dur="8s" repeatCount="indefinite" values="78; 94; 84; 90; 78" />
+                    </feDisplacementMap>
+                  </filter>
+
+                  <!-- MÁSCARA Y DEGRADADO -->
+                  <radialGradient id="mainDistortionFade" gradientUnits="userSpaceOnUse" cx="590" cy="385" r="330">
+                    <stop offset="0%" stop-color="white" stop-opacity="1" />
+                    <stop offset="55%" stop-color="white" stop-opacity="1" />
+                    <stop offset="78%" stop-color="white" stop-opacity=".52" />
+                    <stop offset="100%" stop-color="black" stop-opacity="0" />
+                  </radialGradient>
+                  <mask id="mainDistortionMask" maskUnits="userSpaceOnUse" maskContentUnits="userSpaceOnUse">
+                    <rect x="0" y="0" width="1100" height="850" fill="black" />
+                    <ellipse cx="590" cy="385" rx="335" ry="265" fill="url(#mainDistortionFade)" />
+                  </mask>
+
+                  <!-- BORDE CRISTAL -->
+                  <linearGradient id="glassStroke" x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0%" stop-color="#ffffff" stop-opacity="1" />
+                    <stop offset="16%" stop-color="#fffdf7" stop-opacity=".96" />
+                    <stop offset="28%" stop-color="#dff6ff" stop-opacity=".55" />
+                    <stop offset="44%" stop-color="#fff8fe" stop-opacity=".36" />
+                    <stop offset="60%" stop-color="#ffdff2" stop-opacity=".34" />
+                    <stop offset="76%" stop-color="#d8f6ff" stop-opacity=".36" />
+                    <stop offset="90%" stop-color="#fff7ef" stop-opacity=".70" />
+                    <stop offset="100%" stop-color="#ffffff" stop-opacity=".96" />
+                  </linearGradient>
+
+                  <radialGradient id="specHot" cx="50%" cy="50%" r="50%">
+                    <stop offset="0%" stop-color="#ffffff" stop-opacity=".95" />
+                    <stop offset="100%" stop-color="#ffffff" stop-opacity="0" />
+                  </radialGradient>
+                </defs>
+
+                <!-- CAPA PRINCIPAL -->
+                <g id="mainParallax">
+                  <g>
+                    <animateTransform attributeName="transform" type="translate" dur="8.5s" repeatCount="indefinite" calcMode="spline" keyTimes="0; .3; .65; 1" keySplines=".42 0 .58 1; .42 0 .58 1; .42 0 .58 1" values="0 0; 7 -24; -5 -10; 0 0" />
+
+                    <!-- Imagen Base (CONSERVAR MI IMAGEN DE LA LANDING) -->
+                    <g clip-path="url(#mainBubbleClip)">
+                      <image href="https://cdn-blog.arriendo.com/co/blog/wp-content/uploads/2025/03/Razones-para-vivir-en-Santa-Marta-Colombia-1400x935.jpg" x="125" y="40" width="930" height="720" preserveAspectRatio="xMidYMid slice" />
+                      <ellipse cx="406" cy="218" rx="48" ry="38" fill="url(#specHot)" transform="rotate(-18 406 218)" />
+                    </g>
+
+                    <!-- Centro Distorsionado -->
+                    <g clip-path="url(#mainBubbleClip)" mask="url(#mainDistortionMask)" filter="url(#mainLiquidFilter)" opacity=".90">
+                      <image href="https://cdn-blog.arriendo.com/co/blog/wp-content/uploads/2025/03/Razones-para-vivir-en-Santa-Marta-Colombia-1400x935.jpg" x="125" y="40" width="930" height="720" preserveAspectRatio="xMidYMid slice" />
+                    </g>
+
+                    <!-- Texto Circular Giratorio -->
+                    <g class="marquee">
+                      <text class="marquee__text" dy="-14">
+                        <textPath href="#mainBubblePath" startOffset="0%">
+                          CREATIVE DEVELOPMENT ✦ DIGITAL CRAFT ✦ EXPERIMENTAL UX ✦ MOTION SYSTEMS ✦
+                          <animate attributeName="startOffset" from="0%" to="100%" dur="22s" repeatCount="indefinite" />
+                        </textPath>
+                      </text>
+                      <text class="marquee__text" dy="-14">
+                        <textPath href="#mainBubblePath" startOffset="-100%">
+                          CREATIVE DEVELOPMENT ✦ DIGITAL CRAFT ✦ EXPERIMENTAL UX ✦ MOTION SYSTEMS ✦
+                          <animate attributeName="startOffset" from="-100%" to="0%" dur="22s" repeatCount="indefinite" />
+                        </textPath>
+                      </text>
+                    </g>
+
+                    <use href="#mainBubblePath" class="bubble-edge bubble-edge--main" />
+                  </g>
+                </g>
+
+                <!-- CAPA SECUNDARIA -->
+                <g id="secondaryParallax">
+                  <g>
+                    <animateTransform attributeName="transform" type="translate" dur="7s" begin="-2s" repeatCount="indefinite" calcMode="spline" keyTimes="0; .5; 1" keySplines=".42 0 .58 1; .42 0 .58 1" values="0 0; -14 -30; 0 0" />
+                    <g clip-path="url(#secondaryBubbleClip)">
+                      <image href="https://cdn-blog.arriendo.com/co/blog/wp-content/uploads/2025/03/Razones-para-vivir-en-Santa-Marta-Colombia-1400x935.jpg" x="60" y="230" width="720" height="650" preserveAspectRatio="xMidYMid slice" />
+                    </g>
+                    <use href="#secondaryBubblePath" class="bubble-edge" />
+                  </g>
+                </g>
+
+                <!-- CAPA GOTA -->
+                <g id="dropParallax">
+                  <g>
+                    <animateTransform attributeName="transform" type="translate" dur="6s" begin="-4s" repeatCount="indefinite" calcMode="spline" keyTimes="0; .5; 1" keySplines=".42 0 .58 1; .42 0 .58 1" values="0 0; 15 -34; 0 0" />
+                    <g clip-path="url(#dropBubbleClip)">
+                      <image href="https://cdn-blog.arriendo.com/co/blog/wp-content/uploads/2025/03/Razones-para-vivir-en-Santa-Marta-Colombia-1400x935.jpg" x="450" y="470" width="520" height="440" preserveAspectRatio="xMidYMid slice" />
+                    </g>
+                    <use href="#dropBubblePath" class="bubble-edge" />
+                  </g>
+                </g>
+              </svg>
+            </section>
           </div>
         </section>
 
@@ -174,25 +296,40 @@
               <h2>Momentos que inspiran el próximo destino.</h2>
             </div>
 
-            <div class="gallery-grid">
-              <figure class="gallery-item gallery-item--tall">
-                <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80" alt="Playa con mar azul" />
-              </figure>
-              <figure class="gallery-item">
-                <img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80" alt="Paisaje montañoso" />
-              </figure>
-              <figure class="gallery-item">
-                <img src="https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=900&q=80" alt="Lago rodeado de montañas" />
-              </figure>
-              <figure class="gallery-item gallery-item--wide">
-                <img src="https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=1200&q=80" alt="Ciudad con calles coloridas" />
-              </figure>
-              <figure class="gallery-item">
-                <img src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=900&q=80" alt="Ruta de viaje en lago" />
-              </figure>
-              <figure class="gallery-item">
-                <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80" alt="Paisaje costero con dunas" />
-              </figure>
+            <!-- Carrusel 3D helicoidal (WebGL + shaders GLSL) -->
+            <div class="helix-wrap" id="helixWrap">
+              <div class="helix-stage" id="helixStage">
+                <canvas id="helixCanvas" aria-label="Carrusel 3D helicoidal de destinos"></canvas>
+              </div>
+
+              <div class="helix-ui">
+                <div class="helix-ui__top">
+                  <span class="helix-loader" id="helixLoader" role="status">
+                    <span class="helix-loader__spinner" aria-hidden="true"></span>
+                    Cargando galería…
+                  </span>
+
+                  <button class="helix-fs" id="helixFsBtn" type="button" aria-label="Activar pantalla completa">
+                    <svg id="helixFsIconExpand" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3" />
+                    </svg>
+                    <svg id="helixFsIconExit" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none">
+                      <path d="M18 6L6 18M6 6l12 12" />
+                    </svg>
+                    <span id="helixFsLabel">Pantalla completa</span>
+                  </button>
+                </div>
+
+                <p class="helix-hint">
+                  <span aria-hidden="true">⟷</span> Arrastra o desliza para explorar &nbsp;•&nbsp;
+                  <span aria-hidden="true">🖱</span> Rueda para cambiar el ritmo
+                </p>
+
+                <p class="helix-credits">
+                  WebGL · Three.js · Shaders GLSL<br />
+                  Hecho para Aventura Global
+                </p>
+              </div>
             </div>
           </div>
         </section>
@@ -300,5 +437,8 @@
         </div>
       </footer>
     </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="js/script.js"></script>
   </body>
 </html>

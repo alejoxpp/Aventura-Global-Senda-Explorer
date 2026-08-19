@@ -1,4 +1,304 @@
 <!DOCTYPE html>
-<head>
-    
-</head>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Aventura Global | Viajes que transforman</title>
+    <meta
+      name="description"
+      content="Aventura Global ofrece escapadas premium, destinos impactantes y experiencias de viaje únicas."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <div class="container nav-wrap">
+          <a href="#inicio" class="brand" aria-label="Aventura Global home">
+            <span class="brand__mark">AG</span>
+            <span class="brand__text">Aventura Global</span>
+          </a>
+
+          <nav class="main-nav" aria-label="Navegación principal">
+            <a href="#inicio">Inicio</a>
+            <a href="#destinos">Destinos</a>
+            <a href="#galeria">Galería</a>
+            <a href="#reseñas">Reseñas</a>
+            <a href="#contacto">Contacto</a>
+          </nav>
+
+          <a href="#contacto" class="btn btn--primary">Reservar</a>
+        </div>
+      </header>
+
+      <main>
+        <section class="hero" id="inicio">
+          <div class="hero__bg hero__bg--one"></div>
+          <div class="hero__bg hero__bg--two"></div>
+
+          <div class="container hero__grid">
+            <div class="hero__content">
+              <p class="eyebrow">Viajes inmersivos • experiencias premium</p>
+              <h1>
+                Diseñamos <span>aventuras</span><br />que se quedan contigo.
+              </h1>
+              <p class="hero__text">
+                Exploramos destinos extraordinarios con un enfoque personal, un servicio cuidado y memorias que se viven antes, durante y después del viaje.
+              </p>
+
+              <div class="hero__actions">
+                <a href="#destinos" class="btn btn--primary">Explorar paquetes</a>
+                <a href="#galeria" class="btn btn--ghost">Ver galería</a>
+              </div>
+
+              <ul class="hero__stats" aria-label="Estadísticas de la agencia">
+                <li>
+                  <strong>14k+</strong>
+                  <span>viajeros felices</span>
+                </li>
+                <li>
+                  <strong>28</strong>
+                  <span>destinos exclusivos</span>
+                </li>
+                <li>
+                  <strong>4.9/5</strong>
+                  <span>valoración media</span>
+                </li>
+              </ul>
+            </div>
+
+            <div class="hero__visual glass-panel" aria-label="Carrusel de destinos destacados">
+              <div class="carousel" aria-live="polite">
+                <div class="carousel__track">
+                  <article class="slide slide--one">
+                    <div class="slide__content">
+                      <span class="slide__tag">Bali • 7 noches</span>
+                      <h2>Ritmo tropical y cultura profunda</h2>
+                    </div>
+                  </article>
+
+                  <article class="slide slide--two">
+                    <div class="slide__content">
+                      <span class="slide__tag">Patagonia • 9 noches</span>
+                      <h2>Montañas, lagos y cielo infinito</h2>
+                    </div>
+                  </article>
+
+                  <article class="slide slide--three">
+                    <div class="slide__content">
+                      <span class="slide__tag">Marrakech • 5 noches</span>
+                      <h2>Colores, aromas y autenticidad</h2>
+                    </div>
+                  </article>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="destinations section" id="destinos">
+          <div class="container">
+            <div class="section-heading">
+              <p class="eyebrow">Destinos seleccionados</p>
+              <h2>Escapadas pensadas para vivirlas sin presión.</h2>
+            </div>
+
+            <div class="destination-grid">
+              <article class="destination-card glass-panel">
+                <div class="destination-card__image image--bali"></div>
+                <div class="destination-card__body">
+                  <div class="destination-card__meta">
+                    <span>Bali</span>
+                    <span>7 días</span>
+                  </div>
+                  <h3>Paraíso tropical + rituales ancestrales</h3>
+                  <p>
+                    Alojamiento boutique, excursiones a cascadas y experiencias gastronómicas locales.
+                  </p>
+                  <div class="destination-card__footer">
+                    <strong>Desde $1.240</strong>
+                    <a href="#contacto">Reservar</a>
+                  </div>
+                </div>
+              </article>
+
+              <article class="destination-card glass-panel">
+                <div class="destination-card__image image--patagonia"></div>
+                <div class="destination-card__body">
+                  <div class="destination-card__meta">
+                    <span>Patagonia</span>
+                    <span>9 días</span>
+                  </div>
+                  <h3>Montañas, glaciares y paisajes épicos</h3>
+                  <p>
+                    Senderismo guiado, alojamiento en lodges y vistas que te dejan sin palabras.
+                  </p>
+                  <div class="destination-card__footer">
+                    <strong>Desde $1.890</strong>
+                    <a href="#contacto">Reservar</a>
+                  </div>
+                </div>
+              </article>
+
+              <article class="destination-card glass-panel">
+                <div class="destination-card__image image--marrakech"></div>
+                <div class="destination-card__body">
+                  <div class="destination-card__meta">
+                    <span>Marrakech</span>
+                    <span>5 días</span>
+                  </div>
+                  <h3>Color, cultura y gastronomía vibrante</h3>
+                  <p>
+                    Riads con encanto, recorridos urbanos, desiertos y noches bajo las estrellas.
+                  </p>
+                  <div class="destination-card__footer">
+                    <strong>Desde $980</strong>
+                    <a href="#contacto">Reservar</a>
+                  </div>
+                </div>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="gallery section" id="galeria">
+          <div class="container">
+            <div class="section-heading">
+              <p class="eyebrow">Galería</p>
+              <h2>Momentos que inspiran el próximo destino.</h2>
+            </div>
+
+            <div class="gallery-grid">
+              <figure class="gallery-item gallery-item--tall">
+                <img src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=900&q=80" alt="Playa con mar azul" />
+              </figure>
+              <figure class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=900&q=80" alt="Paisaje montañoso" />
+              </figure>
+              <figure class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1493246507139-91e8fad9978e?auto=format&fit=crop&w=900&q=80" alt="Lago rodeado de montañas" />
+              </figure>
+              <figure class="gallery-item gallery-item--wide">
+                <img src="https://images.unsplash.com/photo-1527631746610-bca00a040d60?auto=format&fit=crop&w=1200&q=80" alt="Ciudad con calles coloridas" />
+              </figure>
+              <figure class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1476514525535-07fb3b4ae5f1?auto=format&fit=crop&w=900&q=80" alt="Ruta de viaje en lago" />
+              </figure>
+              <figure class="gallery-item">
+                <img src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80" alt="Paisaje costero con dunas" />
+              </figure>
+            </div>
+          </div>
+        </section>
+
+        <section class="reviews section" id="reseñas">
+          <div class="container">
+            <div class="section-heading">
+              <p class="eyebrow">Reseñas</p>
+              <h2>La confianza se vive en cada detalle.</h2>
+            </div>
+
+            <div class="reviews-grid">
+              <article class="review-card glass-panel">
+                <div class="review-card__header">
+                  <div class="avatar avatar--one">A</div>
+                  <div>
+                    <h3>Andrea M.</h3>
+                    <span>Patagonia</span>
+                  </div>
+                </div>
+                <p>
+                  “No solo organizan el viaje; crean una experiencia completa, relajante y cuidada para cada detalle.”
+                </p>
+              </article>
+
+              <article class="review-card glass-panel">
+                <div class="review-card__header">
+                  <div class="avatar avatar--two">L</div>
+                  <div>
+                    <h3>Luciano T.</h3>
+                    <span>Bali</span>
+                  </div>
+                </div>
+                <p>
+                  “La atención fue impecable. Todo estaba pensado para que pudiéramos disfrutar sin preocuparse por nada.”
+                </p>
+              </article>
+
+              <article class="review-card glass-panel">
+                <div class="review-card__header">
+                  <div class="avatar avatar--three">S</div>
+                  <div>
+                    <h3>Sofía R.</h3>
+                    <span>Marrakech</span>
+                  </div>
+                </div>
+                <p>
+                  “Una mezcla perfecta entre aventura, diseño y comodidad. Volveríamos a viajar con ellos sin dudarlo.”
+                </p>
+              </article>
+            </div>
+          </div>
+        </section>
+
+        <section class="contact section" id="contacto">
+          <div class="container contact__grid">
+            <div class="contact__copy">
+              <p class="eyebrow">Contacto</p>
+              <h2>Habla con nuestro equipo y arma tu próxima aventura.</h2>
+              <p>
+                Ya sea una escapada romántica, una ruta de aventura o un viaje familiar, te ayudaremos a crear la experiencia ideal.
+              </p>
+              <ul class="contact__list">
+                <li>✦ Viajes personalizados</li>
+                <li>✦ Soporte 24/7</li>
+                <li>✦ Expertos locales</li>
+              </ul>
+            </div>
+
+            <form class="contact-form glass-panel">
+              <div class="field">
+                <label for="name">Nombre</label>
+                <input id="name" type="text" placeholder="Tu nombre" />
+              </div>
+
+              <div class="field">
+                <label for="email">Correo</label>
+                <input id="email" type="email" placeholder="correo@ejemplo.com" />
+              </div>
+
+              <div class="field">
+                <label for="destination">Destino de interés</label>
+                <input id="destination" type="text" placeholder="Ej. Bali, Santorini, Patagonia" />
+              </div>
+
+              <div class="field field--full">
+                <label for="message">Cuéntanos tu idea</label>
+                <textarea id="message" rows="5" placeholder="Quiero un viaje con aventura, relax y gastronomía..."></textarea>
+              </div>
+
+              <button type="submit" class="btn btn--primary">Enviar solicitud</button>
+            </form>
+          </div>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <div class="container footer__wrap">
+          <p>© 2026 Aventura Global</p>
+          <div class="footer__links">
+            <a href="#inicio">Inicio</a>
+            <a href="#destinos">Destinos</a>
+            <a href="#contacto">Contacto</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+  </body>
+</html>

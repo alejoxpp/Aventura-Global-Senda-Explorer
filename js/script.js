@@ -1,6 +1,13 @@
 const mainBubble = document.querySelector("#mainParallax");
 const secondaryBubble = document.querySelector("#secondaryParallax");
 const dropBubble = document.querySelector("#dropParallax");
+const prefersReducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+if (prefersReducedMotion) {
+  document.querySelectorAll("svg").forEach((svg) => {
+    if (typeof svg.pauseAnimations === "function") svg.pauseAnimations();
+  });
+}
 
 const PARALLAX_INTENSITY = 0.5;
 const PARALLAX_SMOOTHNESS = 0.025;
@@ -36,6 +43,10 @@ document.documentElement.addEventListener("mouseleave", () => {
     navToggle.classList.toggle("is-active", open);
     navToggle.setAttribute("aria-expanded", String(open));
     navToggle.setAttribute("aria-label", open ? "Cerrar menú" : "Abrir menú");
+    if (open) {
+      const firstLink = mainNav.querySelector("a");
+      if (firstLink) firstLink.focus();
+    }
   }
 
   navToggle.addEventListener("click", () => {
@@ -46,15 +57,178 @@ document.documentElement.addEventListener("mouseleave", () => {
     link.addEventListener("click", () => setMenu(false));
   });
 
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && mainNav.classList.contains("is-open")) {
+  document.addEventListener("click", (e) => {
+    if (mainNav.classList.contains("is-open") && !mainNav.contains(e.target) && !navToggle.contains(e.target)) {
       setMenu(false);
       navToggle.focus();
     }
   });
 
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && mainNav.classList.contains("is-open")) {
+      setMenu(false);
+      navToggle.focus();
+      return;
+    }
+
+    if (e.key === "Tab" && mainNav.classList.contains("is-open")) {
+      const links = [...mainNav.querySelectorAll("a")];
+      const first = links[0];
+      const last = links[links.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        navToggle.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    }
+  });
+
   window.addEventListener("resize", () => {
     if (window.innerWidth > 981) setMenu(false);
+  });
+})();
+
+/* ============================================================
+   ISLAS DE GALERÍA Y ACCESIBILIDAD
+   ============================================================ */
+(function initDocks() {
+  const galleryToggle = document.getElementById("galleryToggle");
+  const galleryPanel = document.getElementById("galleryPanel");
+  const galleryClose = document.getElementById("galleryClose");
+  const accessibilityToggle = document.getElementById("accessibilityToggle");
+  const accessibilityPanel = document.getElementById("accessibilityPanel");
+  const readerToggle = document.getElementById("readerToggle");
+  const contrastToggle = document.getElementById("contrastToggle");
+  const darkToggle = document.getElementById("darkToggle");
+  const reset = document.getElementById("accessibilityReset");
+  if (!galleryToggle || !galleryPanel || !accessibilityToggle || !accessibilityPanel) return;
+
+  const storageKey = "senda-explorer-accessibility";
+  const defaults = { colorblind: "none", reader: false, contrast: false, dark: false };
+  let settings = { ...defaults };
+  try { settings = { ...defaults, ...JSON.parse(localStorage.getItem(storageKey) || "{}") }; } catch (_) {}
+
+  function setPanel(panel, toggle, open, focusSelector) {
+    panel.hidden = !open;
+    toggle.setAttribute("aria-expanded", String(open));
+    if (open && focusSelector) {
+      const target = panel.querySelector(focusSelector);
+      if (target) target.focus();
+    }
+  }
+
+  function persist() {
+    try { localStorage.setItem(storageKey, JSON.stringify(settings)); } catch (_) {}
+  }
+
+  function applySettings() {
+    document.body.classList.remove(
+      "theme-colorblind-protanopia",
+      "theme-colorblind-deuteranopia",
+      "theme-colorblind-tritanopia",
+      "theme-high-contrast",
+      "theme-dark"
+    );
+    if (settings.colorblind !== "none") document.body.classList.add(`theme-colorblind-${settings.colorblind}`);
+    if (settings.contrast) document.body.classList.add("theme-high-contrast");
+    if (settings.dark) document.body.classList.add("theme-dark");
+
+    document.querySelectorAll("[data-colorblind]").forEach((button) => {
+      button.setAttribute("aria-pressed", String(button.dataset.colorblind === settings.colorblind));
+    });
+    readerToggle.setAttribute("aria-pressed", String(settings.reader));
+    readerToggle.textContent = settings.reader ? "Desactivar relator" : "Activar relator";
+    contrastToggle.setAttribute("aria-pressed", String(settings.contrast));
+    contrastToggle.textContent = settings.contrast ? "Desactivar alto contraste" : "Alto contraste";
+    darkToggle.setAttribute("aria-pressed", String(settings.dark));
+    darkToggle.textContent = settings.dark ? "Desactivar modo oscuro" : "Modo oscuro";
+    persist();
+  }
+
+  function readPage() {
+    if (!("speechSynthesis" in window)) {
+      readerToggle.textContent = "Relator no disponible";
+      return;
+    }
+    window.speechSynthesis.cancel();
+    if (!settings.reader) return;
+    const main = document.querySelector("main");
+    const text = main ? [...main.querySelectorAll("h1, h2, h3, p, li")]
+      .filter((element) => !element.closest(".sr-only, [hidden]"))
+      .map((element) => element.textContent.trim()).filter(Boolean).join(". ") : "";
+    if (text) window.speechSynthesis.speak(new SpeechSynthesisUtterance(text));
+  }
+
+  galleryToggle.addEventListener("click", () => setPanel(galleryPanel, galleryToggle, galleryPanel.hidden, "button"));
+  if (galleryClose) galleryClose.addEventListener("click", () => { setPanel(galleryPanel, galleryToggle, false); galleryToggle.focus(); });
+  accessibilityToggle.addEventListener("click", () => setPanel(accessibilityPanel, accessibilityToggle, accessibilityPanel.hidden, "button"));
+
+  document.querySelectorAll("[data-colorblind]").forEach((button) => {
+    button.addEventListener("click", () => { settings.colorblind = button.dataset.colorblind; applySettings(); });
+  });
+  readerToggle.addEventListener("click", () => { settings.reader = !settings.reader; applySettings(); readPage(); });
+  contrastToggle.addEventListener("click", () => { settings.contrast = !settings.contrast; applySettings(); });
+  darkToggle.addEventListener("click", () => { settings.dark = !settings.dark; applySettings(); });
+  reset.addEventListener("click", () => {
+    settings = { ...defaults };
+    applySettings();
+    window.speechSynthesis?.cancel();
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest(".gallery-dock") && !galleryPanel.hidden) setPanel(galleryPanel, galleryToggle, false);
+    if (!event.target.closest(".accessibility-dock") && !accessibilityPanel.hidden) setPanel(accessibilityPanel, accessibilityToggle, false);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key !== "Escape") return;
+    if (!galleryPanel.hidden) { setPanel(galleryPanel, galleryToggle, false); galleryToggle.focus(); }
+    if (!accessibilityPanel.hidden) { setPanel(accessibilityPanel, accessibilityToggle, false); accessibilityToggle.focus(); }
+  });
+
+  applySettings();
+})();
+
+/* ============================================================
+   FORMULARIO — VALIDACIÓN Y ESTADOS ACCESIBLES
+   ============================================================ */
+(function initContactForm() {
+  const form = document.getElementById("contactForm");
+  const status = document.getElementById("formStatus");
+  if (!form || !status) return;
+
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    status.textContent = "";
+
+    const fields = [...form.querySelectorAll("input[required], textarea[required]")];
+    let firstInvalid = null;
+    let valid = true;
+
+    fields.forEach((field) => {
+      const error = document.getElementById(`${field.id}Error`);
+      const message = field.validity.valueMissing
+        ? "Este campo es obligatorio."
+        : field.validity.typeMismatch
+          ? "Escribe un correo válido."
+          : "";
+      field.setAttribute("aria-invalid", String(Boolean(message)));
+      if (error) error.textContent = message;
+      if (message && !firstInvalid) firstInvalid = field;
+      valid = valid && !message;
+    });
+
+    if (!valid) {
+      status.textContent = "Revisa los campos marcados antes de enviar la solicitud.";
+      firstInvalid.focus();
+      return;
+    }
+
+    status.textContent = "Solicitud recibida. Nuestro equipo se pondrá en contacto contigo.";
+    form.reset();
+    fields.forEach((field) => field.removeAttribute("aria-invalid"));
+    form.querySelectorAll(".field-error").forEach((error) => { error.textContent = ""; });
   });
 })();
 
@@ -77,7 +251,7 @@ function render() {
   requestAnimationFrame(render);
 }
 
-if (mainBubble && secondaryBubble && dropBubble && window.matchMedia("(pointer: fine)").matches) {
+if (mainBubble && secondaryBubble && dropBubble && !prefersReducedMotion && window.matchMedia("(pointer: fine)").matches) {
   render();
 }
 
@@ -88,14 +262,24 @@ if (mainBubble && secondaryBubble && dropBubble && window.matchMedia("(pointer: 
   "use strict";
 
   const helixStage = document.getElementById("helixStage");
+  const helixWrap = document.getElementById("helixWrap");
   const helixCanvas = document.getElementById("helixCanvas");
   const helixLoader = document.getElementById("helixLoader");
   const helixFsBtn = document.getElementById("helixFsBtn");
   const helixFsIconExpand = document.getElementById("helixFsIconExpand");
   const helixFsIconExit = document.getElementById("helixFsIconExit");
   const helixFsLabel = document.getElementById("helixFsLabel");
+  const helixPrev = document.getElementById("helixPrev");
+  const helixPause = document.getElementById("helixPause");
+  const helixNext = document.getElementById("helixNext");
+  const helixAnnouncement = document.getElementById("helixAnnouncement");
 
-  if (!helixStage || !helixCanvas || !helixLoader || !window.THREE) return;
+  if (!helixStage || !helixWrap || !helixCanvas || !helixLoader) return;
+
+  if (!window.THREE) {
+    helixLoader.textContent = "Galería interactiva no disponible. Usa el formato accesible.";
+    return;
+  }
 
   const prefersReducedMotion =
     window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -179,16 +363,20 @@ if (mainBubble && secondaryBubble && dropBubble && window.matchMedia("(pointer: 
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     let loaded = 0;
+    let loadedImages = 0;
     for (let i = 0; i < N; i++) {
       try {
         const img = await loadImage(urls[i]);
         drawCover(ctx, img, i * step, 0, ATLAS.slotW, ATLAS.slotH);
+        loadedImages++;
       } catch (err) {
         console.warn(err.message);
       }
       loaded++;
       if (onProgress) onProgress(loaded, N);
     }
+
+    if (!loadedImages) throw new Error("No se pudo cargar ninguna imagen de la galería");
 
     if (loaded > 0) {
       try {
@@ -235,6 +423,9 @@ if (mainBubble && secondaryBubble && dropBubble && window.matchMedia("(pointer: 
     camera.updateProjectionMatrix();
 
     window.addEventListener("resize", onResize);
+    if (window.ResizeObserver) {
+      new ResizeObserver(onResize).observe(helixStage);
+    }
   }
 
   function createHelix(texture, period) {
@@ -340,6 +531,7 @@ if (mainBubble && secondaryBubble && dropBubble && window.matchMedia("(pointer: 
   let instantVel = 0;
   let autoIdle = 0;
   let dragTrail = [];
+  let isPaused = prefersReducedMotion;
 
   const clock = new THREE.Clock();
 
@@ -352,6 +544,11 @@ if (mainBubble && secondaryBubble && dropBubble && window.matchMedia("(pointer: 
 
   function integratePhysics(dt) {
     dt = Math.min(dt, 0.05);
+
+    if (isPaused) {
+      velocity = 0;
+      return;
+    }
 
     if (dragging) {
       velocity = 0;
@@ -470,6 +667,31 @@ if (mainBubble && secondaryBubble && dropBubble && window.matchMedia("(pointer: 
     }
   }
 
+  function moveBy(direction) {
+    phase += direction;
+    velocity = 0;
+    autoIdle = 0;
+    const imageNumber = ((Math.round(phase) % IMAGE_URLS.length) + IMAGE_URLS.length) % IMAGE_URLS.length + 1;
+    if (helixAnnouncement) helixAnnouncement.textContent = `Imagen ${imageNumber} de ${IMAGE_URLS.length}`;
+  }
+
+  function updatePauseButton() {
+    if (!helixPause) return;
+    helixPause.textContent = isPaused ? "Reanudar movimiento" : "Pausar movimiento";
+    helixPause.setAttribute("aria-pressed", String(isPaused));
+  }
+
+  updatePauseButton();
+  if (helixPrev) helixPrev.addEventListener("click", () => moveBy(-1));
+  if (helixNext) helixNext.addEventListener("click", () => moveBy(1));
+  if (helixPause) {
+    helixPause.addEventListener("click", () => {
+      isPaused = !isPaused;
+      autoIdle = 0;
+      updatePauseButton();
+    });
+  }
+
   helixCanvas.addEventListener("pointerup", onPointerUp);
   helixCanvas.addEventListener("pointercancel", onPointerUp);
 
@@ -484,11 +706,10 @@ if (mainBubble && secondaryBubble && dropBubble && window.matchMedia("(pointer: 
   );
 
   window.addEventListener("keydown", (e) => {
+    if (document.activeElement !== helixCanvas) return;
     if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
       const dir = e.key === "ArrowLeft" ? -1 : 1;
-      autoIdle = 0;
-      velocity += dir * 3.2;
-      phase += dir * 0.12;
+      moveBy(dir);
       e.preventDefault();
     }
   });
@@ -504,8 +725,8 @@ if (mainBubble && secondaryBubble && dropBubble && window.matchMedia("(pointer: 
   helixFsBtn.addEventListener("click", () => {
     if (document.fullscreenElement) {
       document.exitFullscreen();
-    } else if (helixStage.requestFullscreen) {
-      helixStage.requestFullscreen();
+    } else if (helixWrap.requestFullscreen) {
+      helixWrap.requestFullscreen();
     }
   });
 

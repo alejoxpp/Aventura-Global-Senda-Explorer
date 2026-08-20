@@ -213,13 +213,13 @@ if (mainBubble && secondaryBubble && dropBubble && window.matchMedia("(pointer: 
     renderer = new THREE.WebGLRenderer({
       canvas: helixCanvas,
       antialias: true,
-      powerPreference: "high-performance"
+      powerPreference: "high-performance",
+      alpha: true
     });
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.setClearColor(0x06111d, 1);
+    renderer.setClearColor(0x000000, 0);
 
     scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x06111d, 0.022);
 
     camera = new THREE.PerspectiveCamera(
       CONFIG.cameraFov,

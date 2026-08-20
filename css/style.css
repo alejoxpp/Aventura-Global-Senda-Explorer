@@ -1139,15 +1139,11 @@ textarea {
   border: 1px solid var(--line);
   border-radius: var(--radius-lg);
   overflow: hidden;
-  background:
-    radial-gradient(ellipse at 50% 30%, rgba(0, 128, 128, 0.16), transparent 60%),
-    radial-gradient(ellipse at 80% 80%, rgba(217, 4, 41, 0.1), transparent 55%),
-    #071725;
+  background: transparent;
   box-shadow: var(--shadow-soft);
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
-
 .helix-stage {
   position: relative;
   width: 100%;
